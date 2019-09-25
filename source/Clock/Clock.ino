@@ -5,41 +5,21 @@
 #include "SPI.h" 
 #include "SPIFlash.h"
 
-// o #define READ  0
+
 #define CSFLASH_PIN      8             // chip select pin 
-// o #define enable_boost      9             // chip select pin 
-// o #define enable_sd      6  
-// o #define read_buffer 128             // size (in bytes) of read buffer 
-// o #define LOG_DELAY   5000          // 5000ms -> 5sec
 #define MIN_LEVEL  1 //  1440
 #define TMO_LEVEL   5
 volatile uint8_t ready =0;
-// o volatile uint8_t showpic =0;
-// o volatile uint8_t start1 =0;
+
 volatile unsigned int min_cntdown =0;
 volatile uint8_t tmo_cntdown =0;
-// o unsigned short int bw, br;//, i;
-// o char buffer[read_buffer];
-// o int rc;
 
-// o uint32_t ui32_ReadTemp = 0;
-// o uint8_t StringLength = 0;
-// o char buf[50];
-// o uint32_t counter = 0;
-// o volatile uint32_t AccStringLength = 0;
-//const int slaveSelectPin = 13;
-
-// o unsigned int wdtCounter = 0;
 volatile unsigned int picCounterHour = 0;
 volatile unsigned int picCounterMinute = 0;
 volatile bool toggle1 = false;
 volatile bool doLog = false;
 volatile bool darkTheme = false;
-// o char charno[5];
 
-
-
-// o #define LED1 RED_LED
 Epd epd;
 #define F_CPU  8000000
 
@@ -60,18 +40,13 @@ void setup()
   pinMode(CSFLASH_PIN, OUTPUT);
 digitalWrite(CSFLASH_PIN, HIGH);
 
-// o    pinMode(enable_sd, OUTPUT);
-// o       digitalWrite(enable_sd, HIGH);
-// o      pinMode(enable_boost, OUTPUT);
-// o       digitalWrite(enable_boost, LOW);
   doLog=false;
   
   picCounterHour=22;
 picCounterMinute=48;
 ready=true;
 
-//  NextPic(lut_full_update,false);
-//  SetTime();
+
    doLog=false;
  Serial.begin(57500);  
    pinMode(P1_3, INPUT_PULLUP);
@@ -178,7 +153,7 @@ void loop()
 
    if(doLog)
      Serial.println("L Enter LPM3 w/ interrupt");
-  //delay(200);
+  
    __bis_SR_register(LPM3_bits + GIE);           // Enter LPM3 w/ interrupt
  if(doLog)
    Serial.println("L After LPM3 w/ interrupt");
@@ -250,10 +225,7 @@ void DisplayClock(const unsigned char* lut,bool fullupdate)
     pinMode(RST_PIN, OUTPUT);
     pinMode(DC_PIN, OUTPUT);
     pinMode(BUSY_PIN, INPUT); 
-  
- 
 
-// o   digitalWrite(enable_sd, LOW);
    delay(100);
 
 
@@ -267,16 +239,14 @@ if(fullupdate)
      SPI.begin();
       Epd epd;  
  
-//  FatFs.begin(CSFLASH_PIN);
- //  SPI.begin(CS_PIN);
+
  delay(20); 
  
    if (epd.Init(lut,fullupdate) != 0) {
     if(doLog)
     Serial.print("e-Paper init failed");
       die(0);
-   // Serial.print("e-Paper init failed");
-  //  return;
+  
   }
 
  if(doLog)
@@ -373,31 +343,7 @@ void SetTime()
   int lowdigit=0;
   int highdigit=0;
 unsigned int setuptimeout=0;
-  
- // pinMode(P1_1, INPUT_PULLUP);
-
  
-  /*
-   for(int i=0;i < 20;i++)
-   {
-    delay(500);
-    
-     if(digitalRead(P1_1)==0)
-     {
-      dosettime=true;
-       pinMode(P1_2, INPUT_PULLUP);
-      picCounterMinute+=1;
-      ready=true;
-    showpic =true;
-   start1 =1;
- //  NextPic(lut_partial_update,false);
-   setlevel=1;
-      delay(500);
-    
-     }
-   }
-
-*/
   dosettime=true;
   setlevel=1;
 
@@ -407,9 +353,7 @@ unsigned int setuptimeout=0;
         pinMode(P1_1, INPUT_PULLUP);
 
         
-// o digitalWrite(enable_boost, HIGH);
 
- // delay(100);
  pinMode (CSFLASH_PIN, OUTPUT);
   digitalWrite(CSFLASH_PIN, HIGH);
 
@@ -418,13 +362,8 @@ unsigned int setuptimeout=0;
     pinMode(RST_PIN, OUTPUT);
     pinMode(DC_PIN, OUTPUT);
     pinMode(BUSY_PIN, INPUT); 
-  
- 
 
-// o   digitalWrite(enable_sd, LOW);
    delay(100);
-
-   
 
    digitalWrite(RST_PIN, LOW);
     delay(20);
@@ -433,45 +372,28 @@ unsigned int setuptimeout=0;
      SPI.begin();
       Epd epd;  
  
-//  FatFs.begin(CSFLASH_PIN);
- //  SPI.begin(CS_PIN);
+
  delay(20); 
  
    if (epd.Init(lut_full_update,true) != 0) {
     if(doLog)
     Serial.print("e-Paper init failed");
       die(0);
-   // Serial.print("e-Paper init failed");
-  //  return;
+
   }
  
   if (flash.initialize())
   {
-  //  epd.SetFrame2();
+
     epd.ClearFrameMemory(0xff,0x26);
         epd.ClearFrameMemory(0x00,0x24);
     epd.DisplayFrame();
     epd.Init(lut_partial_update,false);
-  //  epd.SetLut(lut_partial_update);
+
     picCounterMinute=0;
     if(doLog)
     Serial.println("Init OK!");
-    /*
-      epd.SetFrameMemory(flash,62,0,4,128,150,0x0,0);
-          epd.SetFrameMemory(flash,picCounterMinute,0,128,128,122,0x0,0);
-          epd.SetBoxMemory(0,126,128,2,0x0);
-          epd.DisplayFrameNoWait();
-            epd.SetFrameMemory(flash,62,0,4,128,150,0x0,0);
-          epd.SetFrameMemory(flash,picCounterMinute,0,128,128,122,0x0,0);
-          epd.SetBoxMemory(0,126,128,2,0x0);
-          epd.DisplayFrameNoWait();
-          */
           DisplaySettings(epd,flash,setlevel,picCounterHour,true,true);
-       //   DisplaySettings(epd,flash,setlevel,picCounterMinute,true,true);
-        //    DisplaySettings(epd,flash,setlevel,picCounterMinute,true,true);
-
-
-       // return;
 
         
    while(dosettime)
@@ -495,8 +417,6 @@ unsigned int setuptimeout=0;
             {
               DisplaySettings(epd,flash,setlevel,picCounterHour,true,true);
             }
-        //    DisplaySettings(epd,flash,setlevel,picCounterMinute,true,true);
-         // DisplaySettings(epd,flash,setlevel,picCounterMinute,true,true);
              
             if(setlevel>6)
           {  
@@ -592,20 +512,9 @@ unsigned int setuptimeout=0;
     Serial.println("Init FAIL!");
      
   }
-
- 
-   
-  //  epd.DisplayFrame();
   /* Deep sleep */
    delay(20);
-  //  ready=true;
-   // return;
    epd.Sleep();
-  //epd.PowerOff();
-  //delay(500);
-  
-
-   
  
 }
 
@@ -613,33 +522,21 @@ void DisplaySettings(Epd epd, SPIFlash spiflush,int menuid,int value,bool left,b
 {
   if(init)
   {
-    ////epd.SetLut(lut_fast_update);
+  
            epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x26,0x0,0);
           epd.SetFrameMemory(flash,value,0,128,128,122,0x26,0x0,0);
-         // epd.SetBoxMemory(0,126,128,2,0xff);
-
+      
          epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x24,0x0,1);
           epd.SetFrameMemory(flash,value,0,128,128,122,0x24,0x0,1);
           epd.DisplayFrame();
-          /*
-      ////    epd.SetLut(lut_partial_update);
-            epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x0,1);
-          epd.SetFrameMemory(flash,value,0,128,128,122,0x0,1);
-          epd.SetBoxMemory(0,126,128,2,0xAA);
-          epd.DisplayFrame();
-          
-            epd.SetFrameMemory(flash,menuid+59,0,4,128,122,0x0,1);
-          epd.SetFrameMemory(flash,value,0,128,128,122,0x0,1);
-          epd.SetBoxMemory(0,126,128,2,0x55);
-          epd.DisplayFrame();
-          */
+    
         
   }
   else
   {
     epd.SetFrameMemory(flash,value,0,128,128,122,0x26,0x0,0);
     epd.SetFrameMemory(flash,value,0,128,128,122,0x24,0x0,1);
-    //      epd.SetBoxMemory(0,126,128,2,0x0);
+  
           epd.DisplayFrame();
     if(left)
     {
@@ -657,8 +554,7 @@ void uploadFlash(){
    pinMode (CSFLASH_PIN, OUTPUT);
   digitalWrite(CSFLASH_PIN, HIGH);
 
-// o  pinMode(enable_sd, OUTPUT);
-// o   digitalWrite(enable_sd, LOW);
+
    delay(500);
      SPI.begin();
   if (flash.initialize())
@@ -676,7 +572,7 @@ void uploadFlash(){
         Serial.println("Flash content:");
       int counter = 0;
       addr1 =0;// 160000; // 5808;  
-      while(counter < 5808){
+      while(counter < 4000){
         Serial.print(flash.readByte(addr1++), HEX);
         counter++;
        // Serial.print('.');
