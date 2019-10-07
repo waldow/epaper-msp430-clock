@@ -36,6 +36,9 @@
 #define EPD_WIDTH       128
 #define EPD_HEIGHT      250
 
+#define FULL      0
+#define FAST      1
+
 // EPD2IN13 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
 #define POWER_OFF                                   0x02
@@ -71,32 +74,13 @@ public:
 
     Epd();
     ~Epd();
-    int  Init(const unsigned char* lut,bool fullupdate);
-    int  InitA(const unsigned char* lut);
-   
+    int  Init(char Mode);
+    
     void SendCommand(unsigned char command);
     void SendData(unsigned char data);
     void WaitUntilIdle(void);
     void Reset(void);
-    void SetBoxMemory(
-        int x,
-        int y,
-        int box_width,
-        int box_height,
-      
-        unsigned char pattern,
-           unsigned char  frame
-    );
-    void SetFrameMemory(
-        const unsigned char* image_buffer,
-        int x,
-        int y,
-        int image_width,
-        int image_height
-    );
-    void SetFrameMemory(const unsigned char* image_buffer);
-     
-
+   
     void SetFrameMemory(
         SPIFlash spiflush,
         uint16_t picid,
@@ -108,13 +92,19 @@ public:
         unsigned char filter,
         bool invert
     );
-    void ClearFrameMemory(unsigned char color,unsigned char frame);
-    void ClearFrameMemoryB(unsigned char color,unsigned char frame);
-    void ClearFrame(void);
+    void SetFrameMemory2(
+        SPIFlash spiflush,
+        uint16_t picid,
+        int x,
+        int y,
+        int image_width,
+        int image_height,
+        bool invert
+    );
+     void ClearFrameMemory(unsigned char color,unsigned char frame);
+     void ClearFrameMemoryB(unsigned char color,unsigned char frame);
     void DisplayFrame(void);
-    void DisplayFrameNoWait(void);
-    void SetFrame1(void);
-     void SetFrame2(void);
+    void DisplayFrame2(void);
     void Sleep(void);
      void PowerOff(void);
 
@@ -125,7 +115,7 @@ private:
     unsigned int busy_pin;
     const unsigned char* lut;
 
-     void SetLut(const unsigned char* lut);
+   
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
 };

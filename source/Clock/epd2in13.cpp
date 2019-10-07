@@ -40,46 +40,19 @@ Epd::Epd() {
     height = EPD_HEIGHT;
 };
 
-int Epd::InitA(const unsigned char* lut) {
-    /* this calls the peripheral hardware interface, see epdif */
-    if (IfInit() != 0) {
-        return -1;
-    }
-    /* EPD hardware init start */
-    this->lut = lut;
-    Reset();
-    SendCommand(DRIVER_OUTPUT_CONTROL);
-    SendData((EPD_HEIGHT - 1) & 0xFF);
-    SendData(((EPD_HEIGHT - 1) >> 8) & 0xFF);
-    SendData(0x00);                     // GD = 0; SM = 0; TB = 0;
-    SendCommand(BOOSTER_SOFT_START_CONTROL);
-    SendData(0xD7);
-    SendData(0xD6);
-    SendData(0x9D);
-    SendCommand(WRITE_VCOM_REGISTER);
-    SendData(0xA8);                     // VCOM 7C
-    SendCommand(SET_DUMMY_LINE_PERIOD);
-    SendData(0x1A);                     // 4 dummy lines per gate
-    SendCommand(SET_GATE_TIME);
-    SendData(0x08);                     // 2us per line
-    SendCommand(DATA_ENTRY_MODE_SETTING);
-    SendData(0x03);                     // X increment; Y increment
-    SetLut(this->lut);
-    /* EPD hardware init end */
-    return 0;
-}
 
-int Epd::Init(const unsigned char* lut,bool fullupdate) {
+int Epd::Init(char Mode)
+{
     /* this calls the peripheral hardware interface, see epdif */
     if (IfInit() != 0) {
         return -1;
     }
-    /* EPD hardware init start */
-    this->lut = lut;
+    
     Reset();
-      WaitUntilIdle();
-      if(fullupdate)
-      {
+    
+    int count;
+    if(Mode == FULL) {
+        WaitUntilIdle();
         SendCommand(0x12); // soft reset
         WaitUntilIdle();
 
@@ -109,25 +82,26 @@ int Epd::Init(const unsigned char* lut,bool fullupdate) {
         SendCommand(0x3C); //BorderWavefrom
         SendData(0x03);
 
-        SendCommand(0x2C);     //VCOM Voltage
-        SendData(0x55);    //
+        SendCommand(0x2C); //VCOM Voltage
+        SendData(0x55); //
 
         SendCommand(0x03);
         SendData(lut_full_update[70]);
 
         SendCommand(0x04); //
-        SendData(lut[71]);
-        SendData(lut[72]);
-        SendData(lut[73]);
+        SendData(lut_full_update[71]);
+        SendData(lut_full_update[72]);
+        SendData(lut_full_update[73]);
 
         SendCommand(0x3A);     //Dummy Line
-        SendData(lut[74]);
+        SendData(lut_full_update[74]);
         SendCommand(0x3B);     //Gate time
-        SendData(lut[75]);
+        SendData(lut_full_update[75]);
 
         SendCommand(0x32);
-        for (int count = 0; count < 70; count++)
-            SendData(lut[count]);
+        for(count = 0; count < 70; count++) {
+            SendData(lut_full_update[count]);
+        }
 
         SendCommand(0x4E);   // set RAM x address count to 0;
         SendData(0x00);
@@ -135,15 +109,16 @@ int Epd::Init(const unsigned char* lut,bool fullupdate) {
         SendData(0xF9);
         SendData(0x00);
         WaitUntilIdle();
-      }else {
+    } else if(Mode == FAST) {
         SendCommand(0x2C);     //VCOM Voltage
         SendData(0x26);
 
         WaitUntilIdle();
 
         SendCommand(0x32);
-        for (int count = 0; count < 70; count++)
-            SendData(lut[count]);
+        for(count = 0; count < 70; count++) {
+            SendData(lut_partial_update[count]);
+        }
 
         SendCommand(0x37);
         SendData(0x00);
@@ -156,13 +131,16 @@ int Epd::Init(const unsigned char* lut,bool fullupdate) {
 
         SendCommand(0x22);
         SendData(0xC0);
+
         SendCommand(0x20);
         WaitUntilIdle();
 
         SendCommand(0x3C); //BorderWavefrom
         SendData(0x01);
+    } else {
+        return -1;
     }
-    
+
     return 0;
 }
 
@@ -187,7 +165,7 @@ void Epd::SendData(unsigned char data) {
  */
 void Epd::WaitUntilIdle(void) {
     while(DigitalRead(busy_pin) == HIGH) {      //LOW: idle, HIGH: busy
-        DelayMs(10);
+        DelayMs(5);
     }      
 }
 
@@ -198,149 +176,13 @@ void Epd::WaitUntilIdle(void) {
  */
 void Epd::Reset(void) {
     DigitalWrite(reset_pin, LOW);                //module reset    
-    DelayMs(20);
+    DelayMs(5);
     DigitalWrite(reset_pin, HIGH);
-    DelayMs(20);    
-}
-
-/**
- *  @brief: set the look-up table register
- */
-void Epd::SetLut(const unsigned char* lut) {
-    this->lut = lut;
-    SendCommand(WRITE_LUT_REGISTER);
-    /* the length of look-up table is 30 bytes */
-    for (int i = 0; i < 70; i++) {
-        SendData(this->lut[i]);
-    }
-}
-
-/**
- *  @brief: put an image buffer to the frame memory.
- *          this won't update the display.
- */
-void Epd::SetFrameMemory(
-    const unsigned char* image_buffer,
-    int x,
-    int y,
-    int image_width,
-    int image_height
-) {
-    int x_end;
-    int y_end;
-
-    if (
-        image_buffer == NULL ||
-        x < 0 || image_width < 0 ||
-        y < 0 || image_height < 0
-    ) {
-        return;
-    }
-    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-    x &= 0xF8;
-    image_width &= 0xF8;
-    if (x + image_width >= this->width) {
-        x_end = this->width - 1;
-    } else {
-        x_end = x + image_width - 1;
-    }
-    if (y + image_height >= this->height) {
-        y_end = this->height - 1;
-    } else {
-        y_end = y + image_height - 1;
-    }
-    SetMemoryArea(x, y, x_end, y_end);
-    /* set the frame memory line by line */
-    for (int j = y; j <= y_end; j++) {
-        SetMemoryPointer(x, j);
-        SendCommand(WRITE_RAM);
-        for (int i = x / 8; i <= x_end / 8; i++) {
-            SendData(image_buffer[(i - x / 8) + (j - y) * (image_width / 8)]);
-        }
-    }
-}
-
-/**
- *  @brief: put an image buffer to the frame memory.
- *          this won't update the display.
- *
- *          Question: When do you use this function instead of 
- *          void SetFrameMemory(
- *              const unsigned char* image_buffer,
- *              int x,
- *              int y,
- *              int image_width,
- *              int image_height
- *          );
- *          Answer: SetFrameMemory with parameters only reads image data
- *          from the RAM but not from the flash in AVR chips (for AVR chips,
- *          you have to use the function pgm_read_byte to read buffers 
- *          from the flash).
- */
-void Epd::SetFrameMemory(const unsigned char* image_buffer) {
-    SetMemoryArea(0, 0, this->width - 1, this->height - 1);
-    /* set the frame memory line by line */
-    for (int j = 0; j < this->height; j++) {
-        SetMemoryPointer(0, j);
-        SendCommand(WRITE_RAM);
-        for (int i = 0; i < this->width / 8; i++) {
-            SendData(pgm_read_byte(&image_buffer[i + j * (this->width / 8)]));
-        }
-    }
+    DelayMs(5);    
 }
 
 
 
-
-void Epd::SetBoxMemory(
-        int x,
-        int y,
-        int box_width,
-        int box_height,
-        unsigned char pattern,
-        unsigned char  frame
-    ){
-
-int x_end;
-    int y_end;
-  
-    unsigned char byte1;
-    
-    
-    if (
-       
-        x < 0 || box_width < 0 ||
-        y < 0 || box_height < 0
-    ) {
-        return;
-    }
-    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-    x &= 0xF8;
-    box_width &= 0xF8;
-    if (x + box_width >= this->width) {
-        x_end = this->width - 1;
-    } else {
-        x_end = x + box_width - 1;
-    }
-    if (y + box_height >= this->height) {
-        y_end = this->height - 1;
-    } else {
-        y_end = y + box_height - 1;
-    }
-    SetMemoryArea(x, y, x_end, y_end);
-    /* set the frame memory line by line */
-    for (int j = y; j <= y_end; j++) {
-        SetMemoryPointer(x, j);
-        SendCommand(frame);
-        for (int i = x / 8; i <= x_end / 8; i++) {
-            
-             SendData(pattern);
-          }
-        
-    }
-
-      
-    }
    void Epd::SetFrameMemory(
     SPIFlash spiflush,
         uint16_t picid,
@@ -382,15 +224,19 @@ int x_end;
     SetMemoryArea(x, y, x_end, y_end);
     /* set the frame memory line by line */
     for (int j = y; j <= y_end; j++) {
-        SetMemoryPointer(x, j);
+        
+          spiflush.readBytes(addr,buffer1,16);
+          addr+=16;
+          br=0;
+           SetMemoryPointer(x, j);
        
            SendCommand(frame);
-           
         for (int i = x / 8; i <= x_end / 8; i++) {
             
-             byte1 = spiflush.readByte(addr); 
-        
-          addr++; //=sizeof(buffer1);
+            // byte1 =0x44; // spiflush.readByte(addr); 
+            byte1 = buffer1[br];
+              br++;
+          //addr++; //=sizeof(buffer1);
           if(i >= 0)
           {
             if(invert)
@@ -403,10 +249,74 @@ int x_end;
     }
 } 
 
-/**
- *  @brief: clear the frame memory with the specified color.
- *          this won't update the display.
- */
+  void Epd::SetFrameMemory2(
+    SPIFlash spiflush,
+        uint16_t picid,
+    int x,
+    int y,
+    int image_width,
+    int image_height,
+  
+    bool invert
+) {
+    int x_end;
+    int y_end;
+  unsigned char buffer1[16];
+    unsigned char byte1;
+    unsigned short int br;
+    uint32_t addr=(uint32_t) picid * (2000 *1)  ;
+    
+    if (
+       
+        x < 0 || image_width < 0 ||
+        y < 0 || image_height < 0
+    ) {
+        return;
+    }
+    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
+    x &= 0xF8;
+    image_width &= 0xF8;
+    if (x + image_width >= this->width) {
+        x_end = this->width - 1;
+    } else {
+        x_end = x + image_width - 1;
+    }
+    if (y + image_height >= this->height) {
+        y_end = this->height - 1;
+    } else {
+        y_end = y + image_height - 1;
+    }
+    SetMemoryArea(x, y, x_end, y_end);
+    /* set the frame memory line by line */
+    for (int j = y; j <= y_end; j++) {
+        
+          spiflush.readBytes(addr,buffer1,16);
+          addr+=16;
+          br=0;
+           SetMemoryPointer(x, j);
+        for (uint8_t command = 0x24; true; command = 0x26)
+        {
+           SendCommand(command);
+            br=0;
+           for (int i = x / 8; i <= x_end / 8; i++) {
+            
+            // byte1 =0x44; // spiflush.readByte(addr); 
+            byte1 = buffer1[br];
+              br++;
+          //addr++; //=sizeof(buffer1);
+          if(i >= 0)
+          {
+            if(command == 0x26)
+             SendData(byte1);
+            else  
+             SendData(~(byte1));
+              
+          }
+        }
+        if(command == 0x26) break;
+      }
+    }
+} 
 void Epd::ClearFrameMemory(unsigned char color,unsigned char frame) {
     SetMemoryArea(0, 0, this->width - 1, this->height - 1);
     /* set the frame memory line by line */
@@ -418,25 +328,24 @@ void Epd::ClearFrameMemory(unsigned char color,unsigned char frame) {
         }
     }
 }
+
 void Epd::ClearFrameMemoryB(unsigned char color,unsigned char frame) {
-    SetMemoryArea(0, 0, this->width - 1, this->height - 1);
-        SetMemoryPointer(0, 0);
+  int x=0;
+    int y=0;
+     int x_end;
+    int y_end;
+
+     x &= 0xF8;
+     x_end = this->width - 1;
+         y_end = this->height - 1;
+     
+       // SetMemoryArea(x, y, x_end,y_end);
+        SetMemoryPointer(x, 120);
         SendCommand(frame);
          for(unsigned int i = 0; i < (this->width * this->height) / 8; i++) {
           SendData(color);  
        }  
       
-}
-void Epd::ClearFrame() {
-    SetMemoryArea(0, 0, this->width - 1, this->height - 1);
-    /* set the frame memory line by line */
-    for (int j = 0; j < this->height; j++) {
-        SetMemoryPointer(0, j);
-        SendCommand(WRITE_RAM);
-        for (int i = 0; i < this->width / 8; i++) {
-            SendData(0x0);
-        }
-    }
 }
 
 /**
@@ -452,33 +361,15 @@ void Epd::DisplayFrame(void) {
     //EPD_SendData(0x0c);
     SendCommand(0x20);
     WaitUntilIdle();
-    /*
-    SendCommand(DISPLAY_UPDATE_CONTROL_2);
-    SendData(0xC4);
-    SendCommand(MASTER_ACTIVATION);
-    SendCommand(TERMINATE_FRAME_READ_WRITE);
-    WaitUntilIdle();
-    */
+
 }
-void Epd::DisplayFrameNoWait(void) {
-    SendCommand(DISPLAY_UPDATE_CONTROL_2);
-    SendData(0xC4);
-    SendCommand(MASTER_ACTIVATION);
-    SendCommand(TERMINATE_FRAME_READ_WRITE);
+void Epd::DisplayFrame2(void) {
+    SendCommand(0x22);
+    //SendData(0xC7);
+    SendData(0x0C);
+    SendCommand(0x20);
     WaitUntilIdle();
-}
-void Epd::SetFrame1(void) {
-    SendCommand(DISPLAY_UPDATE_CONTROL_1);
-    SendData(0xC4);
-     SendCommand(MASTER_ACTIVATION);
-    SendCommand(TERMINATE_FRAME_READ_WRITE);
-    WaitUntilIdle();
- 
-}
-void Epd::SetFrame2(void) {
-    SendCommand(DISPLAY_UPDATE_CONTROL_2);
-    SendData(0xC4);
- 
+
 }
 
 /**
@@ -551,29 +442,7 @@ void Epd::PowerOff() {
  //   SendCommand(DEEP_SLEEP);
  //   SendData(0xA5);     // check code
 }
-const unsigned char lut_full_update_old[] =
-{
-    0x22, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x11, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 
-    0x01, 0x00, 0x00, 0x00, 0x00, 0x00
-};
 
-const unsigned char lut_fast_update_old[] =
-{
-    0x22, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x11, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x0F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-const unsigned char lut_partial_update_old[] =
-{
-    0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x0F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
 
 const unsigned char lut_full_update[] = {
     0x80, 0x60, 0x40, 0x00, 0x00, 0x00, 0x00,       //LUT0: BB:     VS 0 ~7
@@ -612,6 +481,7 @@ const unsigned char lut_fast_update[] = {
 };
 
 const unsigned char lut_partial_update[] = { //20 bytes
+  
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //LUT0: BB:     VS 0 ~7
     0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //LUT1: BW:     VS 0 ~7
     0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,       //LUT2: WB:     VS 0 ~7
@@ -625,6 +495,7 @@ const unsigned char lut_partial_update[] = { //20 bytes
     0x00, 0x00, 0x00, 0x00, 0x00,                   // TP4 A~D RP4
     0x00, 0x00, 0x00, 0x00, 0x00,                   // TP5 A~D RP5
     0x00, 0x00, 0x00, 0x00, 0x00,                   // TP6 A~D RP6
+ 
 
     0x15, 0x41, 0xA8, 0x32, 0x30, 0x0A,
 };

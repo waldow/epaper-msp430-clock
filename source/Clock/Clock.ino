@@ -46,38 +46,58 @@ Epd epd;
 #define F_CPU  8000000
 
 int analogIn;
+
+void unusePin(int pin)
+{
+   pinMode(pin, INPUT_PULLUP);
+  //  digitalWrite(pin, LOW);
+}
 void unusedpins()
 {
-  pinMode(P1_0, INPUT_PULLUP);
-  pinMode(P1_1, INPUT_PULLUP);
-  pinMode(P1_2, INPUT_PULLUP);
- 
+  unusePin(P1_0);
+  unusePin(P1_1);
+  unusePin(P1_2);
+  unusePin(P1_3);
+  unusePin(P1_4);
+  unusePin(P1_5);
+  unusePin(P1_6);
+  unusePin(P1_7);
+  unusePin(P2_0);
+  unusePin(P2_1);
+  unusePin(P2_2);
+  unusePin(P2_3);
+  unusePin(P2_4);
+  unusePin(P2_5);
+  
 }
+
 
 SPIFlash flash(CSFLASH_PIN); //, 0xC840);
 
 void setup()
 {
-  
+ 
   pinMode(CSFLASH_PIN, OUTPUT);
 digitalWrite(CSFLASH_PIN, HIGH);
 
   doLog=false;
   
-  picCounterHour=22;
-picCounterMinute=48;
+  picCounterHour=23;
+picCounterMinute=58;
 ready=true;
 
 
-   doLog=false;
+if(doLog)
  Serial.begin(57500);  
    pinMode(P1_3, INPUT_PULLUP);
    for(int i=0;i < 3;i++)
    {
     delay(500);
+    if(doLog)
      Serial.print("\n Start \n\r");
      if(digitalRead(P1_3)==0)
      {
+      if(doLog)
       Serial.print("\n Upload \n\r");
       delay(1000);
         uploadFlash();
@@ -86,7 +106,7 @@ ready=true;
  
  
  
- // unusedpins();
+ unusedpins();
   
   delay(500);
        delay(500);
@@ -105,6 +125,8 @@ min_cntdown = 0;
   
 
 Serial.println("Sleep setup");
+ delay(500);
+       delay(500);
 
 
 BCSCTL1 |= DIVA_3;              // ACLK/8
@@ -120,12 +142,19 @@ BCSCTL1 |= DIVA_3;              // ACLK/8
    delay(200);
 
 
-   DisplayClock(lut_full_update,true);
+
+ DisplayClock(FULL);
+ //  TestDisplay(true);
+
+ delay(200);
+ delay(200);
+  DisplayClock(FAST);
 }
   
 /* Stop with dying message */         
 void die ( int pff_err  )
 {
+  return;
    Serial.println();
    Serial.print("Failed with rc=");
    Serial.print(pff_err,DEC);
@@ -151,7 +180,7 @@ void die ( int pff_err  )
 
    ready=true;
    Serial.println("Enter LPM3 w/ interrupt");
-   _BIS_SR(LPM3_bits + GIE);           // Enter LPM3 w/ interrupt
+   _BIS_SR(LPM3_bits) ;// + GIE);           // Enter LPM3 w/ interrupt
    Serial.println("After LPM3 w/ interrupt");
 
   
@@ -165,20 +194,31 @@ void die ( int pff_err  )
 /*-----------------------------------------------------------------------*/
 void loop()
 {
+ 
   if(doLog)
     Serial.print("-");
- 
-  if(ready == true)
-  {
-     DisplayClock(lut_partial_update,false);
-  }
+ //delay(500);
+ // __bic_SR_register(LPM3_bits); 
+ //      delay(500);
+
 
    if(doLog)
      Serial.println("L Enter LPM3 w/ interrupt");
-  
+
+     unusedpins();
+    //  pinMode (CSFLASH_PIN, OUTPUT);
+  //  digitalWrite(CSFLASH_PIN, HIGH);
+  //delay(500);
    __bis_SR_register(LPM3_bits + GIE);           // Enter LPM3 w/ interrupt
  if(doLog)
    Serial.println("L After LPM3 w/ interrupt");
+
+    if(ready == true)
+  {
+   // TestDisplay(false);
+ //   TestPower();
+    DisplayClock(FAST);
+  }
   
 }
 
@@ -212,7 +252,7 @@ if(picCounterHour > 23)
     {
       if(doLog) 
        Serial.println("D");
-       WDTCTL = 0xDEAD;
+      // WDTCTL = 0xDEAD;
     }
   }else
   {
@@ -223,9 +263,10 @@ if(picCounterHour > 23)
 
 }
 
-void DisplayClock(const unsigned char* lut,bool fullupdate)
+void DisplayClock(char updatemode)
 {
   unsigned char tfilter=0;
+  
 
   if(doLog)
    Serial.println("N Start");
@@ -248,23 +289,18 @@ void DisplayClock(const unsigned char* lut,bool fullupdate)
     pinMode(DC_PIN, OUTPUT);
     pinMode(BUSY_PIN, INPUT); 
 
-   delay(100);
+   //delay(100);
 
 
-if(fullupdate)
-{
-   digitalWrite(RST_PIN, LOW);
-    delay(20);
-    digitalWrite(RST_PIN, HIGH);
-    delay(20); 
-}
+
+
      SPI.begin();
       Epd epd;  
  
 
- delay(20); 
+// B delay(20); 
  
-   if (epd.Init(lut,fullupdate) != 0) {
+   if (epd.Init(updatemode) != 0) {
     if(doLog)
     Serial.print("e-Paper init failed");
       die(0);
@@ -285,7 +321,8 @@ if(fullupdate)
       tfilter =0xAA;
     else
     tfilter =0x55;
-   
+
+   /*
    if(fullupdate)
    {
     if(darkTheme)
@@ -298,37 +335,55 @@ if(fullupdate)
       epd.ClearFrameMemory(0xff,0x24);
     }
    }
+  */
   
-     if(fullupdate || picCounterMinute == 0 || picCounterMinute == 10 || picCounterMinute % 10 == 1)
+     if(updatemode==FULL || picCounterMinute == 0 || picCounterMinute == 10 || picCounterMinute % 10 == 1)
      {
        if(darkTheme)
         {
-            epd.ClearFrameMemory(0xff ,0x26);
-            epd.ClearFrameMemory(0x00,0x24);
+         //   epd.ClearFrameMemory(0xff ,0x26);
+        //    epd.ClearFrameMemory(0x00,0x24);
          
         }else
         {
-            epd.ClearFrameMemory(0x00 ,0x26);
-            epd.ClearFrameMemory(0xff,0x24);
+       //     epd.ClearFrameMemory(0x00 ,0x26);
+        //    epd.ClearFrameMemory(0xff,0x24);
            
         }
-          epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
-          epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x24,0,darkTheme);//!toggle1);
           
+           //  epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x24,0,darkTheme);//!toggle1);
+           // epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
+            epd.SetFrameMemory2(flash,picCounterHour,0,0,128,125,darkTheme );//!toggle1);
      }
-    epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x26,0,!darkTheme);//toggle1);
-    epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x24,0,darkTheme);//toggle1);
-      
+
+  //    epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x24,0,darkTheme);//!toggle1);
+  //         epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
+ //      epd.SetFrameMemory(flash,picCounterMinute,0,0,128,125,0x24,0,darkTheme);//!toggle1);
+      //     epd.SetFrameMemory(flash,picCounterMinute,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
+           
     
-    epd.DisplayFrame();
-    if(!fullupdate)
+    //epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x24,0,darkTheme);//toggle1);
+    //epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x26,0,!darkTheme);//toggle1);
+
+    epd.SetFrameMemory2(flash,picCounterMinute+24,0,125,128,125,darkTheme);//toggle1);
+    
+    
+      
+   //  epd.ClearFrameMemoryB(0x55,0x24);
+ //     epd.ClearFrameMemoryB(0xAA,0x26);
+      
+      epd.DisplayFrame();
+   
+    if(updatemode == FAST)
     {
-      delay(20);
+   //   epd.ClearFrameMemoryB(0xAA,0x24);
+//      epd.ClearFrameMemoryB(0x55,0x26);
+      
       epd.DisplayFrame();
     }
  
 
-    
+  
     
   }
   else
@@ -354,8 +409,49 @@ if(fullupdate)
 
 }
 
+void TestPower()
+{
+  pinMode (CSFLASH_PIN, OUTPUT);
+  digitalWrite(CSFLASH_PIN, LOW);
+}
 
+void TestDisplay(bool fullupdate)
+{
+   pinMode (CSFLASH_PIN, OUTPUT);
+  digitalWrite(CSFLASH_PIN, HIGH);
 
+    pinMode(CS_PIN, OUTPUT);
+      digitalWrite(CS_PIN, HIGH);
+    pinMode(RST_PIN, OUTPUT);
+    pinMode(DC_PIN, OUTPUT);
+    pinMode(BUSY_PIN, INPUT); 
+
+   delay(100);
+
+    digitalWrite(RST_PIN, LOW);
+    delay(20);
+    digitalWrite(RST_PIN, HIGH);
+    delay(200); 
+     SPI.begin();
+      Epd epd;  
+
+   if(fullupdate)
+   {
+      epd.Init(FULL) ;
+         
+      
+   }else
+   {
+    epd.Init(FAST);
+   }
+   
+   epd.DisplayFrame();
+  delay(200); 
+     epd.Sleep();
+delay(200); 
+      SPI.end();
+      delay(100); 
+}
 
 void SetTime()
 {
@@ -397,7 +493,7 @@ unsigned int setuptimeout=0;
 
  delay(20); 
  
-   if (epd.Init(lut_full_update,true) != 0) {
+   if (epd.Init(FULL) != 0) {
     if(doLog)
     Serial.print("e-Paper init failed");
       die(0);
@@ -407,10 +503,10 @@ unsigned int setuptimeout=0;
   if (flash.initialize())
   {
 
-    epd.ClearFrameMemory(0xff,0x26);
-        epd.ClearFrameMemory(0x00,0x24);
+ //   epd.ClearFrameMemory(0xff,0x26);
+//        epd.ClearFrameMemory(0x00,0x24);
     epd.DisplayFrame();
-    epd.Init(lut_partial_update,false);
+    epd.Init(FAST);
 
     picCounterMinute=0;
     if(doLog)
@@ -424,7 +520,7 @@ unsigned int setuptimeout=0;
     if(setuptimeout > 10000)
     {
         dosettime=false;
-          DisplayClock(lut_partial_update,false);
+          DisplayClock(FULL);
             return;
     }
         
@@ -515,7 +611,7 @@ unsigned int setuptimeout=0;
                 if(setlevel==6)
                   {  
          
-                    DisplayClock(lut_partial_update,true);
+                    DisplayClock(FULL);
                     return;
                 }
          
