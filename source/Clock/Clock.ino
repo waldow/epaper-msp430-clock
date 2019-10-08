@@ -82,8 +82,8 @@ digitalWrite(CSFLASH_PIN, HIGH);
 
   doLog=false;
   
-  picCounterHour=23;
-picCounterMinute=58;
+ picCounterHour=8;
+picCounterMinute=06;
 ready=true;
 
 
