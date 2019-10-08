@@ -183,73 +183,8 @@ void Epd::Reset(void) {
 
 
 
-   void Epd::SetFrameMemory(
-    SPIFlash spiflush,
-        uint16_t picid,
-    int x,
-    int y,
-    int image_width,
-    int image_height,
-      unsigned char  frame,
-     unsigned char filter,
-    bool invert
-) {
-    int x_end;
-    int y_end;
-  unsigned char buffer1[16];
-    unsigned char byte1;
-    unsigned short int br;
-    uint32_t addr=(uint32_t) picid * (2000 *1)  ;
-    
-    if (
-       
-        x < 0 || image_width < 0 ||
-        y < 0 || image_height < 0
-    ) {
-        return;
-    }
-    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-    x &= 0xF8;
-    image_width &= 0xF8;
-    if (x + image_width >= this->width) {
-        x_end = this->width - 1;
-    } else {
-        x_end = x + image_width - 1;
-    }
-    if (y + image_height >= this->height) {
-        y_end = this->height - 1;
-    } else {
-        y_end = y + image_height - 1;
-    }
-    SetMemoryArea(x, y, x_end, y_end);
-    /* set the frame memory line by line */
-    for (int j = y; j <= y_end; j++) {
-        
-          spiflush.readBytes(addr,buffer1,16);
-          addr+=16;
-          br=0;
-           SetMemoryPointer(x, j);
-       
-           SendCommand(frame);
-        for (int i = x / 8; i <= x_end / 8; i++) {
-            
-            // byte1 =0x44; // spiflush.readByte(addr); 
-            byte1 = buffer1[br];
-              br++;
-          //addr++; //=sizeof(buffer1);
-          if(i >= 0)
-          {
-            if(invert)
-             SendData(byte1 | filter);
-            else  
-             SendData(~(byte1 | filter));
-              
-          }
-        }
-    }
-} 
 
-  void Epd::SetFrameMemory2(
+  void Epd::SetFrameMemory(
     SPIFlash spiflush,
         uint16_t picid,
     int x,

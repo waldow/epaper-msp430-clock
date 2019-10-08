@@ -88,17 +88,6 @@ public:
         int y,
         int image_width,
         int image_height,
-        unsigned char frame,
-        unsigned char filter,
-        bool invert
-    );
-    void SetFrameMemory2(
-        SPIFlash spiflush,
-        uint16_t picid,
-        int x,
-        int y,
-        int image_width,
-        int image_height,
         bool invert
     );
      void ClearFrameMemory(unsigned char color,unsigned char frame);

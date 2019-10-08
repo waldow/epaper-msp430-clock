@@ -265,8 +265,7 @@ if(picCounterHour > 23)
 
 void DisplayClock(char updatemode)
 {
-  unsigned char tfilter=0;
-  
+
 
   if(doLog)
    Serial.println("N Start");
@@ -289,16 +288,11 @@ void DisplayClock(char updatemode)
     pinMode(DC_PIN, OUTPUT);
     pinMode(BUSY_PIN, INPUT); 
 
-   //delay(100);
-
-
-
-
      SPI.begin();
       Epd epd;  
  
 
-// B delay(20); 
+
  
    if (epd.Init(updatemode) != 0) {
     if(doLog)
@@ -316,69 +310,20 @@ void DisplayClock(char updatemode)
     Serial.println("Flash Init OK!");
   
    
-  toggle1 = !toggle1;
-  if(toggle1)
-      tfilter =0xAA;
-    else
-    tfilter =0x55;
-
-   /*
-   if(fullupdate)
-   {
-    if(darkTheme)
-    {
-      epd.ClearFrameMemory(0xff,0x26);
-      epd.ClearFrameMemory(0x00,0x24);
-    }else
-    {
-      epd.ClearFrameMemory(0x00,0x26);
-      epd.ClearFrameMemory(0xff,0x24);
-    }
-   }
-  */
-  
-     if(updatemode==FULL || picCounterMinute == 0 || picCounterMinute == 10 || picCounterMinute % 10 == 1)
+     if(updatemode==FULL || picCounterMinute == 0 )
      {
-       if(darkTheme)
-        {
-         //   epd.ClearFrameMemory(0xff ,0x26);
-        //    epd.ClearFrameMemory(0x00,0x24);
-         
-        }else
-        {
-       //     epd.ClearFrameMemory(0x00 ,0x26);
-        //    epd.ClearFrameMemory(0xff,0x24);
-           
-        }
-          
-           //  epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x24,0,darkTheme);//!toggle1);
-           // epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
-            epd.SetFrameMemory2(flash,picCounterHour,0,0,128,125,darkTheme );//!toggle1);
+        epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,darkTheme);
      }
 
-  //    epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x24,0,darkTheme);//!toggle1);
-  //         epd.SetFrameMemory(flash,picCounterHour,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
- //      epd.SetFrameMemory(flash,picCounterMinute,0,0,128,125,0x24,0,darkTheme);//!toggle1);
-      //     epd.SetFrameMemory(flash,picCounterMinute,0,0,128,125,0x26,0,!darkTheme );//!toggle1);
-           
-    
-    //epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x24,0,darkTheme);//toggle1);
-    //epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,0x26,0,!darkTheme);//toggle1);
 
-    epd.SetFrameMemory2(flash,picCounterMinute+24,0,125,128,125,darkTheme);//toggle1);
+    epd.SetFrameMemory(flash,picCounterMinute+24,0,125,128,125,darkTheme);
     
-    
-      
-   //  epd.ClearFrameMemoryB(0x55,0x24);
- //     epd.ClearFrameMemoryB(0xAA,0x26);
+   
       
       epd.DisplayFrame();
    
     if(updatemode == FAST)
     {
-   //   epd.ClearFrameMemoryB(0xAA,0x24);
-//      epd.ClearFrameMemoryB(0x55,0x26);
-      
       epd.DisplayFrame();
     }
  
@@ -641,19 +586,19 @@ void DisplaySettings(Epd epd, SPIFlash spiflush,int menuid,int value,bool left,b
   if(init)
   {
   
-           epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x26,0x0,0);
-          epd.SetFrameMemory(flash,value,0,128,128,122,0x26,0x0,0);
+        //   epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x26,0x0,0);
+      //    epd.SetFrameMemory(flash,value,0,128,128,122,0x26,0x0,0);
       
-         epd.SetFrameMemory(flash,menuid+59,0,4,128,150,0x24,0x0,1);
-          epd.SetFrameMemory(flash,value,0,128,128,122,0x24,0x0,1);
+         epd.SetFrameMemory(flash,menuid+59,0,4,128,150,1);
+          epd.SetFrameMemory(flash,value,0,128,128,122,1);
           epd.DisplayFrame();
     
         
   }
   else
   {
-    epd.SetFrameMemory(flash,value,0,128,128,122,0x26,0x0,0);
-    epd.SetFrameMemory(flash,value,0,128,128,122,0x24,0x0,1);
+    epd.SetFrameMemory(flash,value,0,128,128,122,0);
+   
   
           epd.DisplayFrame();
     if(left)
