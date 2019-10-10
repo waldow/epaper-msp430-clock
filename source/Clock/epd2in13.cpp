@@ -1,3 +1,10 @@
+/*  modified code from 
+ *   https://github.com/waveshare/e-Paper/blob/master/Arduino%20UNO/epd2in13_V2/epd2in13_V2.cpp
+ *   and
+ *   https://github.com/waveshare/e-Paper/blob/master/Arduino%20UNO/epd2in13/epd2in13/epd2in13.cpp
+ */
+
+
 /**
  *  @filename   :   epd2in13.cpp
  *  @brief      :   Implements for e-paper library
@@ -264,24 +271,7 @@ void Epd::ClearFrameMemory(unsigned char color,unsigned char frame) {
     }
 }
 
-void Epd::ClearFrameMemoryB(unsigned char color,unsigned char frame) {
-  int x=0;
-    int y=0;
-     int x_end;
-    int y_end;
 
-     x &= 0xF8;
-     x_end = this->width - 1;
-         y_end = this->height - 1;
-     
-       // SetMemoryArea(x, y, x_end,y_end);
-        SetMemoryPointer(x, 120);
-        SendCommand(frame);
-         for(unsigned int i = 0; i < (this->width * this->height) / 8; i++) {
-          SendData(color);  
-       }  
-      
-}
 
 /**
  *  @brief: update the display
@@ -298,7 +288,7 @@ void Epd::DisplayFrame(void) {
     WaitUntilIdle();
 
 }
-void Epd::DisplayFrame2(void) {
+void Epd::DisplayFrameAlt(void) {
     SendCommand(0x22);
     //SendData(0xC7);
     SendData(0x0C);

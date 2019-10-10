@@ -1,3 +1,9 @@
+/*  Modified code from
+ *   https://github.com/waveshare/e-Paper/blob/master/Arduino%20UNO/epd2in13/epd2in13/epd2in13.h
+ *   and
+ *   https://github.com/waveshare/e-Paper/blob/master/Arduino%20UNO/epd2in13_V2/epd2in13_V2.h
+ */
+
 /**
  *  @filename   :   epd2in13.h
  *  @brief      :   Header file for e-paper display library epd2in13.cpp
@@ -90,10 +96,9 @@ public:
         int image_height,
         bool invert
     );
-     void ClearFrameMemory(unsigned char color,unsigned char frame);
-     void ClearFrameMemoryB(unsigned char color,unsigned char frame);
+    void ClearFrameMemory(unsigned char color,unsigned char frame);
     void DisplayFrame(void);
-    void DisplayFrame2(void);
+    void DisplayFrameAlt(void);
     void Sleep(void);
      void PowerOff(void);
 
