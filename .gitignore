@@ -32,3 +32,31 @@
 *.app
 /poc/oldfiles/.vscode
 /poc/epaper_esp32wf/.vscode
+
+#Ignore thumbnails created by Windows
+Thumbs.db
+#Ignore files built by Visual Studio
+*.pdb
+*.user
+*.aps
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+.vs/
+#Nuget packages folder
+packages/
