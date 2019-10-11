@@ -32,7 +32,7 @@ SOFTWARE.
 #define CSFLASH_PIN      8             // chip select pin for Flash 
 #define TIME_OUT_LEVEL   3
 #define MINUTE_OFFSET   24
-#define MENU_OFFSET    84
+#define MENU_OFFSET     83
 volatile uint8_t readyDisplay = 0;
 
 
