@@ -32,7 +32,7 @@ SOFTWARE.
 #define CSFLASH_PIN      8             // chip select pin for Flash 
 #define TIME_OUT_LEVEL   3
 #define MINUTE_OFFSET   24
-#define MENU_OFFSET     83
+#define MENU_OFFSET     86
 volatile uint8_t readyDisplay = 0;
 
 
@@ -42,6 +42,8 @@ volatile unsigned int counterHour = 0;
 volatile unsigned int counterMinute = 0;
 volatile bool doLog = false;
 volatile bool darkTheme = false;
+
+struct CommandComms {char command;uint32_t value;  } ;
 
 Epd epd;
 
@@ -99,10 +101,10 @@ void setup()
 			Serial.print("\n Start \n\r");
 		if (digitalRead(P1_3) == 0)
 		{
-			if (doLog)
-				Serial.print("\n Upload \n\r");
+			  Serial.begin(57500);
+				Serial.print("\n Interface \n\r");
 			delay(1000);
-			uploadFlash();
+			SerialComms();
 		}
 	}
 
@@ -577,12 +579,13 @@ void displaySettings(Epd epd, SPIFlash spiflush, int menuid, int value, bool ini
 	}
 }
 
-void uploadFlash() {
+void SerialComms() {
 
 
 	uint32_t addr1 = 0; //5808;
 	char input = 0;
-
+ int counter = 0;
+CommandComms commandcomms;
 	pinMode(CSFLASH_PIN, OUTPUT);
 	digitalWrite(CSFLASH_PIN, HIGH);
 
@@ -592,26 +595,81 @@ void uploadFlash() {
 	if (flash.initialize())
 	{
 		Serial.println("Flash Init OK!");
-
+  addr1 = 0; 
+    for (;;)
+    {
+        commandcomms=  GetCommand();
+        if(commandcomms.command == 1)
+        {
+             Serial.print("Value content:");
+           Serial.print(commandcomms.value, HEX);
+          Serial.print("DeviceID: ");
+          Serial.println(flash.readDeviceId(), HEX);
+        }
+        else if(commandcomms.command == 2)
+        {
+             Serial.print("Set Address:");
+           Serial.print(commandcomms.value, DEC);
+         addr1 =  commandcomms.value;
+        }
+        else if(commandcomms.command == 3)
+        {
+         
+          counter=0;
+           Serial.print("Flash content:");
+           Serial.print(commandcomms.value, DEC);
+           Serial.println(" bytes:");
+          while (counter < commandcomms.value) {
+           
+           Serial.print(flash.readByte(addr1++), HEX);
+            counter++;
+      
+            }
+            Serial.println();
+        }
+        else if(commandcomms.command == 4)
+        {
+       //   addr1 = 0;
+          counter=0;
+           Serial.print("Erase4K: ");
+           Serial.print(commandcomms.value, DEC);
+           Serial.println(" blocks:");
+           flash.blockErase4K(commandcomms.value);
+          while (counter < commandcomms.value) {
+             flash.blockErase4K(addr1);
+             while (flash.busy());
+             addr1 +=4096;
+         
+            counter++;
+      
+            }
+            Serial.println();
+        }
+         else if(commandcomms.command == 99)
+        {
+          break;
+        }
+    }
+    
 		Serial.print("DeviceID: ");
 		Serial.println(flash.readDeviceId(), HEX);
 
-		Serial.print("Erasing Flash chip ... ");
-		flash.chipErase();
-		while (flash.busy());
-		Serial.println("DONE");
+	//	Serial.print("Erasing Flash chip ... ");
+	//	flash.chipErase();
+//		while (flash.busy());
+//		Serial.println("DONE");
 
-		Serial.println("Flash content:");
-		int counter = 0;
-		addr1 = 0;
-		while (counter < 4000) {
-			Serial.print(flash.readByte(addr1++), HEX);
-			counter++;
+		
+		
+	//	addr1 = 0;
+//		while (counter < 4000) {
+//			Serial.print(flash.readByte(addr1++), HEX);
+//			counter++;
 			
-		}
+//		}
 
 		Serial.println();
-		addr1 = 0; 
+//		addr1 = 0; 
 		for (;;)
 		{
 			if (Serial.available() > 0) {
@@ -638,4 +696,27 @@ void uploadFlash() {
 	}
 
 
+}
+
+CommandComms  GetCommand()
+{
+  uint8_t offset=0;  
+  uint8_t input = 0;
+  CommandComms commandcomms;
+  commandcomms.value = 0;
+  char *ptr =(char*)&commandcomms;
+  while(offset < 6)
+  {
+    if (Serial.available() > 0) {
+        input = Serial.read();
+        
+      ptr[offset] =input;
+      
+          offset++;
+      
+        
+    }
+  }
+
+  return commandcomms;
 }

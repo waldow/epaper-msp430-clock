@@ -149,5 +149,29 @@ namespace FlashUploader
                 
            
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            CommandComms commandComms;
+
+            commandComms.command =byte.Parse(textBox3.Text);
+            commandComms.value = Int32.Parse(textBox4.Text);
+            byte[] bytesA = BitConverter.GetBytes(commandComms.value);
+            byte[] bytes = new byte[6];
+            bytes[0] = commandComms.command;
+            bytes[1] = 0x00;
+            bytes[2] = bytesA[0];
+            bytes[3] = bytesA[1];
+            bytes[4] = bytesA[2];
+            bytes[5] = bytesA[3];
+            _serialPort.Write(bytes, 0, 6);
+          
+        }
     }
+
+     struct CommandComms
+    {
+       public byte command;
+        public Int32 value;
+            } 
 }

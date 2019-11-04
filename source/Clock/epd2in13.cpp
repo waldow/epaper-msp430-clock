@@ -243,8 +243,13 @@ void Epd::Reset(void) {
            for (int i = x / 8; i <= x_end / 8; i++) {
             
             // byte1 =0x44; // spiflush.readByte(addr); 
-            byte1 = buffer1[br];
-              br++;
+            
+            if(invert)
+              byte1 = ~buffer1[br];
+             else
+              byte1 = buffer1[br]; 
+              
+             br++;
           //addr++; //=sizeof(buffer1);
           if(i >= 0)
           {
