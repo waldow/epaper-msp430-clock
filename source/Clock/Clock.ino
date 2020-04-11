@@ -57,8 +57,11 @@ void unusePin(int pin)
 void unusedPins()
 {
 	unusePin(P1_0);
+ if(!doLog)
+ {
 	unusePin(P1_1);
 	unusePin(P1_2);
+ }
 	unusePin(P1_3);
 	unusePin(P1_4);
 	unusePin(P1_5);
@@ -82,7 +85,7 @@ void setup()
 	pinMode(CSFLASH_PIN, OUTPUT);
 	digitalWrite(CSFLASH_PIN, HIGH);
 
-	doLog = false;
+	doLog = true;
 
 	counterHour = 0;
 	counterMinute = 0;
@@ -96,9 +99,12 @@ void setup()
 	{
 		delay(500);
 		if (doLog)
-			Serial.print("\n Start \n\r");
+			Serial.print("\n Start.. \n\r");
 		if (digitalRead(P1_3) == 0)
 		{
+      if (!doLog)
+        Serial.begin(57500);
+      doLog = true;
 			if (doLog)
 				Serial.print("\n Upload \n\r");
 			delay(1000);
@@ -124,7 +130,7 @@ void setup()
 	BCSCTL3 |= XCAP_3;              //12.5pF cap- setting for 32768Hz crystal
 
 	CCTL0 = CCIE;                   // CCR0 interrupt enabled
-	CCR0 = 30720;           // 512 -> 1 sec, 30720 -> 1 min 10240; //
+	CCR0 = 30720;           // 512 -> 1 sec, 30720 -> 1 min max 32767 ; //
 	TACTL = TASSEL_1 + ID_3 + MC_1;         // ACLK, /8, upmode
 
 	delay(200);
@@ -185,7 +191,10 @@ void loop()
 		Serial.print("-");
 
 	if (doLog)
+  {
 		Serial.println("L Enter LPM3 w/ interrupt");
+    delay(500);
+  }
 
 	unusedPins(); // to minimize current draw when in sleep
 
@@ -282,12 +291,13 @@ void displayClock(char updatemode)
 
 	if (doLog)
 		Serial.println("e-Paper init good");
-
+  
+  flash.wakeup1();
 	if (flash.initialize())
 	{
 		if (doLog)
 			Serial.println("Flash Init OK!");
-		flash.wakeup1();
+	//	flash.wakeup1();
 
 		if (updatemode == FULL || counterMinute == 0)
 		{

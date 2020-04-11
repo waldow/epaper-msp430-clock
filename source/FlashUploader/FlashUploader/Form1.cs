@@ -50,6 +50,11 @@ namespace FlashUploader
         private void uploadfile(string filename)
         {
             int psize = int.Parse(textBoxSize.Text);
+            if (checkBoxUseFileSize.Checked)
+            {
+                System.IO.FileInfo fi = new FileInfo(filename);
+                psize = (int) fi.Length;
+            }
 
             byte[] bytes = new byte[psize];
            
@@ -148,6 +153,11 @@ namespace FlashUploader
             }
                 
            
+        }
+
+        private void textBoxSize_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

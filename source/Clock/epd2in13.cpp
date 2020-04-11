@@ -243,7 +243,10 @@ void Epd::Reset(void) {
            for (int i = x / 8; i <= x_end / 8; i++) {
             
             // byte1 =0x44; // spiflush.readByte(addr); 
-            byte1 = buffer1[br];
+            if(invert)
+              byte1 = ~buffer1[br];
+             else 
+              byte1 = buffer1[br]; 
               br++;
           //addr++; //=sizeof(buffer1);
           if(i >= 0)
@@ -333,21 +336,10 @@ void Epd::SetMemoryPointer(int x, int y) {
  */
 void Epd::Sleep() {
 
-   SendCommand(0x22); //POWER OFF
-    SendData(0xC3);
-    SendCommand(0x20);
-  WaitUntilIdle();
-    SendCommand(0x10); //enter deep sleep
-    SendData(0x01);
-  //  DelayMs(100);
-
-    return;
-  // SendCommand(POWER_OFF);
-  //  WaitUntilIdle();
-   // DelayMs(200);
-    SendCommand(DEEP_SLEEP_MODE);
-    SendData(0x1);     // check code
-    //WaitUntilIdle();
+   SendCommand(POWER_OFF);
+    WaitUntilIdle();
+    SendCommand(DEEP_SLEEP);
+    SendData(0xA5);     // check code
 }
 void Epd::PowerOff() {
 

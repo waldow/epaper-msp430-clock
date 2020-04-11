@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.label1 = new System.Windows.Forms.Label();
             this.textBoxComPort = new System.Windows.Forms.TextBox();
             this.buttonOpenPort = new System.Windows.Forms.Button();
@@ -40,6 +41,9 @@
             this.buttonStart = new System.Windows.Forms.Button();
             this.textBoxSize = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.checkBoxUseFileSize = new System.Windows.Forms.CheckBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.SuspendLayout();
             // 
             // label1
@@ -125,26 +129,47 @@
             // 
             // textBoxSize
             // 
-            this.textBoxSize.Location = new System.Drawing.Point(178, 91);
+            this.textBoxSize.Location = new System.Drawing.Point(159, 93);
             this.textBoxSize.Name = "textBoxSize";
             this.textBoxSize.Size = new System.Drawing.Size(100, 20);
             this.textBoxSize.TabIndex = 9;
-            this.textBoxSize.Text = "2000";
+            this.textBoxSize.Text = "2756";
+            this.textBoxSize.TextChanged += new System.EventHandler(this.textBoxSize_TextChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(145, 96);
+            this.label2.Location = new System.Drawing.Point(126, 96);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(27, 13);
             this.label2.TabIndex = 10;
             this.label2.Text = "Size";
             // 
+            // checkBoxUseFileSize
+            // 
+            this.checkBoxUseFileSize.AutoSize = true;
+            this.checkBoxUseFileSize.Location = new System.Drawing.Point(265, 95);
+            this.checkBoxUseFileSize.Name = "checkBoxUseFileSize";
+            this.checkBoxUseFileSize.Size = new System.Drawing.Size(87, 17);
+            this.checkBoxUseFileSize.TabIndex = 11;
+            this.checkBoxUseFileSize.Text = "Use File Size";
+            this.checkBoxUseFileSize.UseVisualStyleBackColor = true;
+            // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Location = new System.Drawing.Point(0, 296);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(379, 22);
+            this.statusStrip1.TabIndex = 12;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(357, 311);
+            this.ClientSize = new System.Drawing.Size(379, 318);
+            this.Controls.Add(this.statusStrip1);
+            this.Controls.Add(this.checkBoxUseFileSize);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.textBoxSize);
             this.Controls.Add(this.buttonStart);
@@ -177,6 +202,9 @@
         private System.Windows.Forms.Button buttonStart;
         private System.Windows.Forms.TextBox textBoxSize;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.CheckBox checkBoxUseFileSize;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.StatusStrip statusStrip1;
     }
 }
 
