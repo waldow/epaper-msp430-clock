@@ -44,6 +44,9 @@
             this.checkBoxUseFileSize = new System.Windows.Forms.CheckBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.buttonSendCommand = new System.Windows.Forms.Button();
+            this.comboBoxCommands = new System.Windows.Forms.ComboBox();
+            this.textBoxCommandValue = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
@@ -89,7 +92,7 @@
             this.textBox1.Location = new System.Drawing.Point(12, 156);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(328, 126);
+            this.textBox1.Size = new System.Drawing.Size(337, 126);
             this.textBox1.TabIndex = 4;
             // 
             // textBox2
@@ -97,7 +100,7 @@
             this.textBox2.Location = new System.Drawing.Point(12, 130);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(64, 20);
+            this.textBox2.Size = new System.Drawing.Size(37, 20);
             this.textBox2.TabIndex = 5;
             // 
             // buttonSelectFolder
@@ -129,17 +132,17 @@
             // 
             // textBoxSize
             // 
-            this.textBoxSize.Location = new System.Drawing.Point(159, 93);
+            this.textBoxSize.Location = new System.Drawing.Point(193, 93);
             this.textBoxSize.Name = "textBoxSize";
-            this.textBoxSize.Size = new System.Drawing.Size(100, 20);
+            this.textBoxSize.Size = new System.Drawing.Size(75, 20);
             this.textBoxSize.TabIndex = 9;
-            this.textBoxSize.Text = "2756";
+            this.textBoxSize.Text = "2048";
             this.textBoxSize.TextChanged += new System.EventHandler(this.textBoxSize_TextChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(126, 96);
+            this.label2.Location = new System.Drawing.Point(145, 96);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(27, 13);
             this.label2.TabIndex = 10;
@@ -148,7 +151,7 @@
             // checkBoxUseFileSize
             // 
             this.checkBoxUseFileSize.AutoSize = true;
-            this.checkBoxUseFileSize.Location = new System.Drawing.Point(265, 95);
+            this.checkBoxUseFileSize.Location = new System.Drawing.Point(274, 95);
             this.checkBoxUseFileSize.Name = "checkBoxUseFileSize";
             this.checkBoxUseFileSize.Size = new System.Drawing.Size(87, 17);
             this.checkBoxUseFileSize.TabIndex = 11;
@@ -163,11 +166,48 @@
             this.statusStrip1.TabIndex = 12;
             this.statusStrip1.Text = "statusStrip1";
             // 
+            // buttonSendCommand
+            // 
+            this.buttonSendCommand.Location = new System.Drawing.Point(234, 119);
+            this.buttonSendCommand.Name = "buttonSendCommand";
+            this.buttonSendCommand.Size = new System.Drawing.Size(118, 23);
+            this.buttonSendCommand.TabIndex = 13;
+            this.buttonSendCommand.Text = "Send Command";
+            this.buttonSendCommand.UseVisualStyleBackColor = true;
+            this.buttonSendCommand.Click += new System.EventHandler(this.buttonSendCommand_Click);
+            // 
+            // comboBoxCommands
+            // 
+            this.comboBoxCommands.FormattingEnabled = true;
+            this.comboBoxCommands.Items.AddRange(new object[] {
+            "Get Device ID",
+            "Full Erase",
+            "Set Address",
+            "Read flash content",
+            "Erase4K block",
+            "Write data"});
+            this.comboBoxCommands.Location = new System.Drawing.Point(55, 120);
+            this.comboBoxCommands.Name = "comboBoxCommands";
+            this.comboBoxCommands.Size = new System.Drawing.Size(108, 21);
+            this.comboBoxCommands.TabIndex = 14;
+            // 
+            // textBoxCommandValue
+            // 
+            this.textBoxCommandValue.Location = new System.Drawing.Point(169, 122);
+            this.textBoxCommandValue.Multiline = true;
+            this.textBoxCommandValue.Name = "textBoxCommandValue";
+            this.textBoxCommandValue.Size = new System.Drawing.Size(59, 20);
+            this.textBoxCommandValue.TabIndex = 15;
+            this.textBoxCommandValue.Text = "0";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(379, 318);
+            this.Controls.Add(this.textBoxCommandValue);
+            this.Controls.Add(this.comboBoxCommands);
+            this.Controls.Add(this.buttonSendCommand);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.checkBoxUseFileSize);
             this.Controls.Add(this.label2);
@@ -205,6 +245,9 @@
         private System.Windows.Forms.CheckBox checkBoxUseFileSize;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.Button buttonSendCommand;
+        private System.Windows.Forms.ComboBox comboBoxCommands;
+        private System.Windows.Forms.TextBox textBoxCommandValue;
     }
 }
 

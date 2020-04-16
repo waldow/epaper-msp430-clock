@@ -50,10 +50,12 @@ namespace FlashUploader
         private void uploadfile(string filename)
         {
             int psize = int.Parse(textBoxSize.Text);
+            System.IO.FileInfo fi = new FileInfo(filename);
+            int fsize = (int)fi.Length;
             if (checkBoxUseFileSize.Checked)
             {
-                System.IO.FileInfo fi = new FileInfo(filename);
-                psize = (int) fi.Length;
+             
+                psize = fsize;
             }
 
             byte[] bytes = new byte[psize];
@@ -61,9 +63,10 @@ namespace FlashUploader
             _cnt1 = 0;
            
             var filedata = File.ReadAllBytes(filename);
-
-            filedata.Take(psize).ToArray().CopyTo(bytes, 0);
-
+            if(psize <= fsize)
+                filedata.Take(psize).ToArray().CopyTo(bytes, 0);
+            else
+                filedata.Take(fsize).ToArray().CopyTo(bytes, 0);
 
             for (int i = 0; i < bytes.Length; i += 8)
             {
@@ -158,6 +161,46 @@ namespace FlashUploader
         private void textBoxSize_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void buttonSendCommand_Click(object sender, EventArgs e)
+        {
+            CommandComms commandComms;
+
+            commandComms.command = GetCommandFromCombo();
+            commandComms.value = Int32.Parse(textBoxCommandValue.Text);
+            byte[] bytesA = BitConverter.GetBytes(commandComms.value);
+            byte[] bytes = new byte[6];
+            bytes[0] = commandComms.command;
+            bytes[1] = 0x00;
+            bytes[2] = bytesA[0];
+            bytes[3] = bytesA[1];
+            bytes[4] = bytesA[2];
+            bytes[5] = bytesA[3];
+            _serialPort.Write(bytes, 0, 6);
+        }
+        private byte GetCommandFromCombo()
+        {
+            byte command = 0;
+
+            switch(comboBoxCommands.SelectedItem)
+            {
+                case "Get Device ID": command = 1; break;
+                case "Full Erase": command = 5; break;
+                case "Set Address": command = 2; break;
+                case "Read flash content": command = 3; break;
+                case "Erase4K block": command = 4; break;
+                case "Write data": command = 6; break;
+
+            }
+
+            return command;
+        }
+
+        struct CommandComms
+        {
+            public byte command;
+            public Int32 value;
         }
     }
 }

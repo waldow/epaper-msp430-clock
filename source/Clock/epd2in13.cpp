@@ -206,7 +206,7 @@ void Epd::Reset(void) {
   unsigned char buffer1[16];
     unsigned char byte1;
     unsigned short int br;
-    uint32_t addr=(uint32_t) picid * (2000 *1)  ;
+    uint32_t addr=(uint32_t) picid * (2048 *1)  ;
     
     if (
        
@@ -336,10 +336,22 @@ void Epd::SetMemoryPointer(int x, int y) {
  */
 void Epd::Sleep() {
 
-   SendCommand(POWER_OFF);
-    WaitUntilIdle();
-    SendCommand(DEEP_SLEEP);
-    SendData(0xA5);     // check code
+ 
+   SendCommand(0x22); //POWER OFF
+    SendData(0xC3);
+    SendCommand(0x20);
+  WaitUntilIdle();
+    SendCommand(0x10); //enter deep sleep
+    SendData(0x01);
+  //  DelayMs(100);
+
+    return;
+  // SendCommand(POWER_OFF);
+  //  WaitUntilIdle();
+   // DelayMs(200);
+    SendCommand(DEEP_SLEEP_MODE);
+    SendData(0x1);     // check code
+    //WaitUntilIdle();
 }
 void Epd::PowerOff() {
 

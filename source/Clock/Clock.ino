@@ -29,19 +29,24 @@ SOFTWARE.
 
 #define F_CPU  8000000
 
-#define CSFLASH_PIN      8             // chip select pin for Flash 
-#define TIME_OUT_LEVEL   3
-#define MINUTE_OFFSET   24
-#define MENU_OFFSET     83
+#define CSFLASH_PIN     8             // chip select pin for Flash 
+#define TIME_OUT_LEVEL  3
+#define HOUR_OFFSET     8
+#define MINUTE_OFFSET   24+HOUR_OFFSET
+#define MENU_OFFSET     0
 volatile uint8_t readyDisplay = 0;
 
 
 volatile uint8_t timeOutCounter = 0;
-
+volatile unsigned int lookOffset = 0;
 volatile unsigned int counterHour = 0;
 volatile unsigned int counterMinute = 0;
 volatile bool doLog = false;
 volatile bool darkTheme = false;
+
+struct CommandComms {
+  char command;
+  uint32_t value;  };
 
 Epd epd;
 
@@ -85,7 +90,7 @@ void setup()
 	pinMode(CSFLASH_PIN, OUTPUT);
 	digitalWrite(CSFLASH_PIN, HIGH);
 
-	doLog = true;
+	doLog = false;
 
 	counterHour = 0;
 	counterMinute = 0;
@@ -106,9 +111,9 @@ void setup()
         Serial.begin(57500);
       doLog = true;
 			if (doLog)
-				Serial.print("\n Upload \n\r");
+				Serial.print("\n Ready \n\r");
 			delay(1000);
-			uploadFlash();
+			  SerialComms();
 		}
 	}
 
@@ -301,10 +306,10 @@ void displayClock(char updatemode)
 
 		if (updatemode == FULL || counterMinute == 0)
 		{
-			epd.SetFrameMemory(flash, counterHour, 0, 0, 128, 125, darkTheme);  //left side
+			epd.SetFrameMemory(flash,lookOffset+ counterHour + HOUR_OFFSET, 0, 0, 128, 125, darkTheme);  //left side
 		}
 
-		epd.SetFrameMemory(flash, counterMinute + MINUTE_OFFSET, 0, 125, 128, 125, darkTheme); //right side
+		epd.SetFrameMemory(flash, lookOffset+counterMinute + MINUTE_OFFSET, 0, 125, 128, 125, darkTheme); //right side
 
 		epd.DisplayFrame();
 
@@ -393,7 +398,7 @@ void setTimeSetup()
 	unsigned int setuptimeout = 0;
 
 	dosettime = true;
-	setlevel = 1;
+	setlevel = 0;
 
 
 	pinMode(P1_2, INPUT_PULLUP);
@@ -441,7 +446,7 @@ void setTimeSetup()
 		counterMinute = 0;
 		if (doLog)
 			Serial.println("Init OK!");
-		displaySettings(epd, flash, setlevel, counterHour, true);
+		displaySettings(epd, flash, setlevel, counterHour-5, true);
 
 
 		while (dosettime)
@@ -458,7 +463,13 @@ void setTimeSetup()
 			{
 				setuptimeout = 0;
 				setlevel++;
-				if (setlevel > 2)
+       if (setlevel > 6)
+       {
+          setlevel = 0;
+          displaySettings(epd, flash, setlevel, -3, true);
+          
+        }else
+				if (setlevel > 3)
 				{
 					displaySettings(epd, flash, setlevel, counterMinute, true);
 				}
@@ -467,18 +478,28 @@ void setTimeSetup()
 					displaySettings(epd, flash, setlevel, counterHour, true);
 				}
 
-				if (setlevel > 6)
-				{
-					setlevel = 1;
-					displaySettings(epd, flash, setlevel, counterHour, true);
-				}
+				
 
 			}
 			else
 				if (digitalRead(P1_2) == 0)
 				{
 					setuptimeout = 0;
-					if (setlevel == 1) //hours first digit
+          if (setlevel == 0) //LOOK
+          {
+
+             lookOffset +=84;
+             if(lookOffset >= 336)
+                lookOffset=0;
+             displaySettings(epd, flash, setlevel, -3, true);
+          }
+          if (setlevel == 1) //dark theme
+          {
+
+            darkTheme = !darkTheme;
+            displaySettings(epd, flash, setlevel, darkTheme, true);
+          }
+					if (setlevel == 2) //hours first digit
 					{
 
 						counterHour += 10;
@@ -492,7 +513,7 @@ void setTimeSetup()
 
 
 					}
-					if (setlevel == 2) //hours second digit
+					if (setlevel == 3) //hours second digit
 					{
 
 						counterHour += 1;
@@ -505,7 +526,7 @@ void setTimeSetup()
 
 
 					}
-					if (setlevel == 3) // minutes fist digit
+					if (setlevel == 4) // minutes fist digit
 					{
 
 						counterMinute += 10;
@@ -520,7 +541,7 @@ void setTimeSetup()
 
 					}
 
-					if (setlevel == 4)  // minutes second digit
+					if (setlevel == 5)  // minutes second digit
 					{
 
 						counterMinute += 1;
@@ -533,12 +554,7 @@ void setTimeSetup()
 
 
 					}
-					if (setlevel == 5) //dark theme
-					{
-
-						darkTheme = !darkTheme;
-						displaySettings(epd, flash, setlevel, darkTheme, true);
-					}
+					
 					if (setlevel == 6)  //exit
 					{
 
@@ -574,14 +590,14 @@ void displaySettings(Epd epd, SPIFlash spiflush, int menuid, int value, bool ini
 	{
 
 		epd.SetFrameMemory(flash, menuid + MENU_OFFSET, 0, 4, 128, 150, 1);
-		epd.SetFrameMemory(flash, value+MINUTE_OFFSET, 0, 128, 128, 122, 1);
+		epd.SetFrameMemory(flash,lookOffset +value+MINUTE_OFFSET, 0, 128, 128, 122, 1);
 		epd.DisplayFrame();
 
 
 	}
 	else
 	{
-		epd.SetFrameMemory(flash, value+MINUTE_OFFSET, 0, 128, 128, 122, 0);
+		epd.SetFrameMemory(flash,lookOffset+value+MINUTE_OFFSET, 0, 128, 128, 122, 0);
 		epd.DisplayFrame();
 		
 	}
@@ -646,6 +662,181 @@ void uploadFlash() {
 	{
 		Serial.println("Flash Init FAILED!");
 	}
+}
+
+void SerialComms() {
 
 
+  uint32_t addr1 = 0; //5808;
+  char input = 0;
+ uint32_t counter = 0;
+CommandComms commandcomms;
+  pinMode(CSFLASH_PIN, OUTPUT);
+  digitalWrite(CSFLASH_PIN, HIGH);
+
+
+  delay(500);
+  SPI.begin();
+  if (flash.initialize())
+  {
+    flash.wakeup1();
+    Serial.println("Flash Init OK!");
+    Serial.print("DeviceID: ");
+    Serial.println(flash.readDeviceId(), HEX);
+  addr1 = 0; 
+    for (;;)
+    {
+        commandcomms=  GetCommand();
+        if(commandcomms.command == 1)
+        {
+             Serial.print("Value content:");
+           Serial.print(commandcomms.value, HEX);
+          Serial.print("DeviceID: ");
+          Serial.println(flash.readDeviceId(), HEX);
+        }
+        else if(commandcomms.command == 2)
+        {
+             Serial.print("Set Address:");
+           Serial.print(commandcomms.value, DEC);
+         addr1 =  commandcomms.value;
+        }
+        else if(commandcomms.command == 3)
+        {
+         
+          counter=0;
+           Serial.print("Flash content:");
+           Serial.print(commandcomms.value, DEC);
+           Serial.println(" bytes:");
+          while (counter < commandcomms.value) {
+           
+           Serial.print(flash.readByte(addr1++), HEX);
+            counter++;
+      
+            }
+            Serial.println();
+        }
+        else if(commandcomms.command == 4)
+        {
+       //   addr1 = 0;
+          counter=0;
+           Serial.print("Erase4K: ");
+           Serial.print(commandcomms.value, DEC);
+           Serial.println(" blocks:");
+           flash.blockErase4K(commandcomms.value);
+          while (counter < commandcomms.value) {
+             flash.blockErase4K(addr1);
+             while (flash.busy());
+             addr1 +=4096;
+         
+            counter++;
+      
+            }
+            Serial.println();
+        }
+        else if(commandcomms.command == 5)
+        {
+           Serial.println("Full Erase: ");
+            flash.chipErase();
+            while (flash.busy());
+            Serial.println("DONE");
+        }
+         else if(commandcomms.command == 6)
+        {
+           Serial.println("Write:: ");
+           counter=commandcomms.value;
+           while (counter > 0) 
+          {
+              if (Serial.available() > 0) 
+              {
+                input = Serial.read();
+
+
+               flash.writeByte(addr1, (uint8_t)input);
+               addr1++;
+               counter--;
+               Serial.print('.');
+
+              }
+              else
+              {
+                  Serial.print('*');
+                  delay(100);
+              }
+          }
+          Serial.println("DONE");
+        }
+         else if(commandcomms.command == 99)
+        {
+          break;
+        }
+    }
+    
+    Serial.print("DeviceID: ");
+    Serial.println(flash.readDeviceId(), HEX);
+
+  //  Serial.print("Erasing Flash chip ... ");
+  //  flash.chipErase();
+//    while (flash.busy());
+//    Serial.println("DONE");
+
+    
+    
+  //  addr1 = 0;
+//    while (counter < 4000) {
+//      Serial.print(flash.readByte(addr1++), HEX);
+//      counter++;
+      
+//    }
+
+    Serial.println();
+//    addr1 = 0; 
+    for (;;)
+    {
+      if (Serial.available() > 0) {
+        input = Serial.read();
+
+
+        flash.writeByte(addr1, (uint8_t)input);
+        addr1++;
+        Serial.print('.');
+
+
+
+      }
+      else
+      {
+        Serial.print('*');
+        delay(100);
+      }
+    }
+  }
+  else
+  {
+    Serial.println("Flash Init FAILED!");
+  }
+
+
+}
+
+CommandComms  GetCommand()
+{
+  uint8_t offset=0;  
+  uint8_t input = 0;
+  CommandComms commandcomms;
+  commandcomms.value = 0;
+  char *ptr =(char*)&commandcomms;
+  while(offset < 6)
+  {
+    if (Serial.available() > 0) {
+        input = Serial.read();
+        
+      ptr[offset] =input;
+      
+          offset++;
+      
+        
+    }
+  }
+
+  return commandcomms;
 }
